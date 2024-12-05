@@ -1,9 +1,9 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
 //class Value{};
 //class Operation{};
 
-enum Type { INT,OP,CP,PLUS,MULT };
+enum Type { END,INT,OP,CP,PLUS,MULT };
 class Token{
 public:
     Token(long _value) : value(_value), type(INT), prior(0) {}
@@ -49,6 +49,10 @@ public:
     void add(Token token){
         cout << token;
     }
+private:
+    deque<Token> d;
+    stack<Token> s;
+
 };
 
 class Parser {
@@ -80,12 +84,12 @@ public:
             }
             ++i;
         }
-        
+        p.add(Token(END,0)); 
     }
 };
 
 int main(){
-    string input = "55+21*(23+335)+44";
+    string input = "5+5";
     Parser parser;
     Processor proc;
     parser.Parse(input,proc);
