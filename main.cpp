@@ -1,14 +1,29 @@
 #include <bits/stdc++.h>
+#include <cstdlib>
 using namespace std;
 //class Value{};
 //class Operation{};
 
 enum Type { END,INT,OP,CP,PLUS,MULT };
-class Token{
+//токен - то, что взято из входного потока
+//class Token хранит тип токена, для операнда хранит значение,
+// а для операции - ее тип и приоритет
+class Token{ 
+private:
+    Type type;
+    int prior;
+    long value;
 public:
     Token(long _value) : value(_value), type(INT), prior(0) {}
     Token(Type _type, int _prior) : type(_type), prior(_prior), value(0) {}
-    Token(Token &t) : type(t.type), value(t.value), prior(t.prior) {} //copy ctor
+    Token(const Token &t) : type(t.type), value(t.value), prior(t.prior) {} //copy ctor
+
+    Token& operator=(const Token& rhs){
+        this->value = rhs.value;
+        this->prior= rhs.prior;
+        this->type= rhs.type;
+        return *this;
+    }
 
     long getValue() {
         return value;
@@ -20,15 +35,12 @@ public:
         return type;
     }
     friend ostream& operator<<(ostream &os, Token &t);
-private:
-    
-    Type type;
-    int prior;
-    long value;
 };
 
 ostream& operator<<(ostream& os, Token &t){
     switch(t.type){ 
+        case END:
+            break;
         case INT:
             os << t.value; break;
         case OP:
@@ -39,22 +51,50 @@ ostream& operator<<(ostream& os, Token &t){
             os << "+"; break;
         case MULT:
             os << "*"; break;
-        default:
-            throw logic_error(string("not implemented print for " + t.type));
+        default:{
+            throw logic_error(string("not implemented print for ")+to_string(t.type));
+        }
     }
     return os;
 }
 class Processor{
+private:
+    deque<Token> d; // for rpn
+    stack<Token> s; // for operations
 public:
-    void add(Token token){
-        cout << token;
+    void add(Token t){
+        switch(t.getType()){ 
+            case END:
+                while(!s.empty()){ 
+                    d.push_back(s.top());
+                    s.pop();
+                } 
+                for(auto i : d){
+                    cout << i << ' ';
+                }
+                cout << endl;
+                break;
+            case INT:
+                d.push_back(t);
+                break;
+            case PLUS: case MULT:
+                while(!s.empty() && s.top().getPrior() >= t.getPrior()){ //checking the precedence of operations 
+                    d.push_back(s.top());
+                    s.pop();
+                } 
+                s.push(t);
+                break;
+            default:{
+                throw logic_error(string("not implemented process for ")+to_string(t.getType()));
+            }
+        }
     }
 private:
-    deque<Token> d;
-    stack<Token> s;
-
+    bool isOperation(Type t) {
+        return t == PLUS || t == MULT;
+    }
 };
-
+//Parser разбивает входную строку на токены и добавляет их в Processor
 class Parser {
 public:
     void Parse(string s, Processor &p){
@@ -89,10 +129,11 @@ public:
 };
 
 int main(){
-    string input = "5+5";
+    string input = "5+3+4*5*7+5*3";
     Parser parser;
     Processor proc;
     parser.Parse(input,proc);
+    //TODO : OP AND CP
     cout << endl;
     return 0;
 }
